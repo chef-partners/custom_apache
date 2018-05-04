@@ -10,9 +10,9 @@
 #################################################
 
 # Load from node attributes some variables we'll need.
-site_name = node.site.name
-content_owner = node.site.content.owner
-content_group = node.site.content.group
+site_name = node['site']['name']
+content_owner = node['site']['content']['owner']
+content_group = node['site']['content']['group']
 
 # Ensure the apt cache is up-to-date.
 apt_update 'Update the apt cache daily' do
@@ -25,14 +25,10 @@ end
 # https://docs.chef.io/deprecations_resource_cloning.html
 #################################################
 
-# Install additional Apache packages.
-packages = %w( libapache2-modsecurity libapache2-mod-spamhaus )
+package 'openjdk-8-jdk'
 
-packages.each do |p|
-  package 'install libapache2 package' do
-    package_name p
-  end
-end
+# Install additional Apache packages.
+package %w( libapache2-modsecurity libapache2-mod-spamhaus )
 
 # Create the group that owns web content.
 group content_group do
@@ -49,21 +45,20 @@ user content_owner do
   group content_group
   home "/home/#{content_owner}"
   shell '/bin/bash'
-  supports({
-    manage_home: true,
-    non_unique: false
-  })
+  manage_home true
+  non_unique false
 end
 
 # Use the custom site resource to configure the website.
 custom_apache_site site_name do
-  homepage '<h1>Hello world!</h1>'
+  homepage '<h1>Ubuntu Homepage!</h1>'
 end
 
 # Configure the homepage owner.
 file '/var/www/html/index.html' do
   owner content_owner
-  group content_group
+#  group content_group
+  group 'bogus_users'
   mode 0644
 end
 
